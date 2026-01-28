@@ -1,0 +1,55 @@
+version: '3.8'
+
+# Development overrides
+services:
+  api:
+    build:
+      target: build
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
+    volumes:
+      - ./src:/src/src:cached
+      - ~/.nuget/packages:/root/.nuget/packages:ro
+    ports:
+      - "5000:8080"
+      - "5001:8081"
+
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  # Optional: Redis Commander for development
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: orders-redis-commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - orders-network
+    depends_on:
+      - redis
+    profiles:
+      - tools
+
+  # Optional: pgAdmin for development
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: orders-pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "8082:80"
+    networks:
+      - orders-network
+    depends_on:
+      - postgres
+    profiles:
+      - tools
